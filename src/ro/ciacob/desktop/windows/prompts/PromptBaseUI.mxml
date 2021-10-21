@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<windows:BasicWindowRootContainer
+		 styleName="secondaryWindow"
+		 xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:windows="ro.ciacob.desktop.windows.*">
+	<fx:Declarations/>
+	<mx:VBox x="{OUTER_PADDING}"
+			 y="{OUTER_PADDING}">
+	
+		<fx:Script>
+			<![CDATA[
+				import mx.controls.Button;
+				import mx.controls.CheckBox;
+				import mx.controls.ProgressBar;
+				import mx.controls.ProgressBarLabelPlacement;
+				import mx.controls.ProgressBarMode;
+				import mx.events.CloseEvent;
+				
+				import ro.ciacob.desktop.signals.IObserver;
+				import ro.ciacob.desktop.windows.prompts.constants.PromptDefaults;
+				import ro.ciacob.utils.Strings;
+	
+				private static const INNER_PADDING:Number = 10;
+				private static const MAX_TEXT_WIDTH:Number = 400;
+				private static const MIN_BUTTON_WIDTH:Number = 100;
+				private static const OUTER_PADDING:Number = 20;
+	
+				private var _buttonsChanged:Boolean;
+				private var _buttonsList:Array = [];
+				private var _checkboxChanged:Boolean;
+				private var _checkboxLabel:String;
+				private var _iconChanged:Boolean;
+				private var _iconClass:Class;
+				private var _interactionDetail:String;
+				private var _progress:Number = 0;
+				private var _progressBar:ProgressBar;
+				private var _progressBarChanged:Boolean;
+				private var _progressBarObserver:IObserver;
+				private var _progressChanged:Boolean;
+				private var _progressLabel:String;
+				private var _progressLabelChanged:Boolean;
+				[Bindable]
+				private var _text:String;
+				private var _textChanged:Boolean;
+	
+				public function createButton(label:String):void {
+					label = Strings.trim(label);
+					if (!Strings.isEmpty(label)) {
+						var labelExists:Boolean = (_buttonsList.indexOf(label) >= 0);
+						if (!labelExists) {
+							_buttonsList.push(label);
+							_buttonsChanged = true;
+							invalidateProperties();
+						}
+					}
+				}
+	
+				public function createCheckBox(label:String):void {
+					label = Strings.trim(label);
+					if (_checkboxLabel != label) {
+						_checkboxLabel = label;
+						_checkboxChanged = true;
+						invalidateProperties();
+					}
+				}
+	
+				public function createProgressBar(observer:IObserver):void {
+					if (_progressBarObserver != observer) {
+						if (_progressBarObserver != null) {
+							_progressBarObserver.stopObserving (PromptDefaults.PROGRESS_CHANGED, _onProgressChanged);
+						}
+						_progressBarObserver = observer;
+						_progressBarObserver.observe (PromptDefaults.PROGRESS_CHANGED, _onProgressChanged);
+						_progressBarChanged = true;
+						invalidateProperties();
+					}
+				}
+	
+				public function get iconClass():Class {
+					return _iconClass;
+				}
+	
+				public function set iconClass(value:Class):void {
+					if (_iconClass != value) {
+						_iconClass = value;
+						_iconChanged = true;
+						invalidateProperties();
+					}
+				}
+	
+				public function get interactionDetail():String {
+					return _interactionDetail;
+				}
+	
+				public function get text():String {
+					return _text;
+				}
+	
+				public function set text(value:String):void {
+					if (_text != value) {
+						_text = value;
+						_textChanged = true;
+						invalidateProperties();
+					}
+				}
+	
+				override protected function commitProperties():void {
+					super.commitProperties();
+					if (_textChanged) {
+						_textChanged = false;
+						if (_text != null) {
+							textContent.htmlText = Strings.ensureNoTLF(_text);
+						} else {
+							textContent.text = '';
+						}
+					}
+	
+					if (_iconChanged) {
+						_iconChanged = false;
+						imageContent.source = _iconClass;
+					}
+	
+					if (_buttonsChanged) {
+						_buttonsChanged = false;
+						_destroyButtons();
+						_createButtons();
+					}
+	
+					if (_checkboxChanged) {
+						_checkboxChanged = false;
+						_destroyCheckbox();
+						if (!Strings.isEmpty(_checkboxLabel)) {
+							_createCheckbox();
+						}
+					}
+	
+					if (_progressBarChanged) {
+						_progressBarChanged = false;
+						_destroyProgressBar();
+						if (_progressBarObserver != null) {
+							_createProgressBar();
+						}
+					}
+	
+					if (_progressChanged) {
+						_progressChanged = false;
+						if (_progressBar != null) {
+							_progressBar.setProgress(_progress, 1);
+						}
+					}
+	
+					if (_progressLabelChanged) {
+						_progressLabelChanged = false;
+						if (_progressBar != null) {
+							_progressBar.label = _progressLabel;
+						}
+					}
+				}
+	
+				private function _createButtons():void {
+					for (var i:int = 0; i < _buttonsList.length; i++) {
+						var label:String = _buttonsList[i];
+						var button:Button = new Button;
+						button.styleName = 'skinnedButton';
+						button.label = label;
+						button.addEventListener(MouseEvent.CLICK, _onButtonClick);
+						button.minWidth = MIN_BUTTON_WIDTH;
+						buttonsRecipient.addChild(button);
+					}
+				}
+	
+				private function _createCheckbox():void {
+					var checkBox:CheckBox = new CheckBox;
+					checkBox.label = _checkboxLabel;
+					checkBox.addEventListener(Event.CHANGE, _onCheckboxChange);
+					checkBoxRecipient.addChild(checkBox);
+				}
+	
+				private function _createProgressBar():void {
+					_progressBar = new ProgressBar;
+					_progressBar.percentWidth = 100;
+					_progressBar.mode = ProgressBarMode.MANUAL;
+					_progressBar.labelPlacement = ProgressBarLabelPlacement.TOP;
+					_progressBar.label = PromptDefaults.INITIALIZING;
+					progressBarRecipient.addChild(_progressBar);
+				}
+	
+				private function _destroyAll():void {
+					_destroyButtons();
+					_destroyCheckbox();
+					_destroyProgressBar();
+				}
+	
+				private function _destroyButtons():void {
+					while (buttonsRecipient.numChildren > 0) {
+						var button:Button = (buttonsRecipient.getChildAt(0) as Button);
+						button.removeEventListener(MouseEvent.CLICK, _onButtonClick);
+						buttonsRecipient.removeChild(button);
+					}
+				}
+	
+				private function _destroyCheckbox():void {
+					while (checkBoxRecipient.numChildren > 0) {
+						var checkBox:CheckBox = checkBoxRecipient.getChildAt(0) as CheckBox;
+						checkBox.removeEventListener(Event.CHANGE, _onCheckboxChange);
+						checkBoxRecipient.removeChild(checkBox);
+					}
+				}
+	
+				private function _destroyProgressBar():void {
+					while (progressBarRecipient.numChildren > 0) {
+						var child:DisplayObject = progressBarRecipient.getChildAt(0);
+						progressBarRecipient.removeChild(child);
+					}
+					_progressBar = null;
+				}
+	
+				private function _onButtonClick(event:MouseEvent):void {
+					var button:Button = (event.target as Button);
+					_interactionDetail = button.label;
+					dispatchEvent(new Event(PromptDefaults.USER_INTERRACTION));
+					_requestTermination()
+				}
+	
+				private function _onCheckboxChange(event:Event):void {
+					var checkBox:CheckBox = (event.target as CheckBox);
+					_interactionDetail = checkBox.selected ? PromptDefaults.CHECKED : PromptDefaults.UNCHECKED;
+					dispatchEvent(new Event(PromptDefaults.USER_INTERRACTION));
+				}
+	
+				private function _onProgressChanged(current:Number, total:Number, information:String = null):void {
+					// Update the progress (fill percent) of the progress bar
+					_progress = (current / total);
+					_progressChanged = true;
+					invalidateProperties();
+					// Update the label of the progress bar
+					information = Strings.trim(information);
+					if (_progressLabel != information) {
+						_progressLabel = information;
+						_progressLabelChanged = true;
+						invalidateProperties();
+					}
+				}
+	
+				private function _requestTermination():void {
+					_destroyAll();
+					dispatchEvent(new CloseEvent(CloseEvent.CLOSE));
+				}
+			]]>
+		</fx:Script>
+	
+		<!-- Image and text -->
+		<mx:HBox horizontalGap="{INNER_PADDING}"
+				 verticalAlign="middle">
+			<mx:Image height="100%"
+					  id="imageContent"
+					  verticalAlign="middle"/>
+			<mx:Text id="textContent"
+					 maxWidth="{MAX_TEXT_WIDTH}"
+					 paddingRight="{OUTER_PADDING}"
+					 selectable="false" />
+	
+		</mx:HBox>
+	
+		<!-- Progress bar -->
+		<mx:Box id="progressBarRecipient"
+				paddingLeft="{imageContent.width + INNER_PADDING}"
+				paddingRight="{OUTER_PADDING}"
+				width="100%"/>
+	
+		<!-- Check box -->
+		<mx:Box id="checkBoxRecipient"
+				paddingLeft="{imageContent.width + INNER_PADDING}"
+				paddingRight="{OUTER_PADDING}"/>
+	
+	
+		<!-- Buttons -->
+		<mx:HBox id="buttonsRecipient"
+				 paddingBottom="0"
+				 paddingLeft="{imageContent.width + INNER_PADDING}"
+				 paddingRight="{OUTER_PADDING}"
+				 paddingTop="{INNER_PADDING}"
+				 horizontalAlign="right"
+				 width="100%" />
+	
+	</mx:VBox>
+</windows:BasicWindowRootContainer>
