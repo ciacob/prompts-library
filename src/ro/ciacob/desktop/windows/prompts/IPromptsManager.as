@@ -14,7 +14,7 @@ package ro.ciacob.desktop.windows.prompts {
 		 * @param 	title
 		 * 			The prompt's title. Optional, defaults to specific values, e.g. "Alert".
 		 *
-		 * @return	An IObserver implementor's instance that will dispatch the USER_INTERRACTION notification.
+		 * @return	An IObserver implementor's instance that will dispatch the USER_INTERACTION notification.
 		 * 			One can register a callback to this notification to react based on which button user has
 		 * 			clicked to dismiss the prompt (provided there are more of them). The callback will receive
 		 * 			the name of the button as its lone argument. Use the constants in the AssetKeys class for
@@ -55,7 +55,7 @@ package ro.ciacob.desktop.windows.prompts {
 		 *
 		 * NOTE
 		 * There should not be multiple instances of PromptManagers, unless you plan to also have multiple
-		 * instances of WindowsManagers to respectivelly instantiate them with. Otherwise, they may present
+		 * instances of WindowsManagers to respectively instantiate them with. Otherwise, they may present
 		 * erratic behavior, possibly overriding each other's commands.
 		 *
 		 * @param	windowsManager
@@ -74,10 +74,27 @@ package ro.ciacob.desktop.windows.prompts {
 		 *			Optional. Function to execute after initializing the UIComponent that
 		 *			will display the actual prompt. Will receive the UIComponent instance as
 		 *			argument
+		 *
+		 * @param	useNativeWindows
+		 * 			Optional, default `false`. Whether to use the NATIVE style when creating
+		 * 			windows, which has the host operating system producing the actual chrome for
+		 * 			each window. If `false` (the default) a custom, Flex chrome will be provided,
+		 * 			which is configurable via CSS. See the WindowsManager library documentation
+		 * 			for details.
 		 */
-		function init(windowsManager:IWindowsManager, alertIcon:Class = null, confirmationIcon:Class = null, errorIcon:Class =
-			null, informationIcon:Class = null, yesLabel:String = null, noLabel:String = null, okLabel:String = null, cancelLabel:String =
-			null, uiCallback:Function = null):void;
+		function init (
+				windowsManager:IWindowsManager,
+				alertIcon:Class = null,
+				confirmationIcon:Class = null,
+				errorIcon:Class = null,
+				informationIcon:Class = null,
+				yesLabel:String = null,
+				noLabel:String = null,
+				okLabel:String = null,
+				cancelLabel:String = null,
+				uiCallback:Function = null,
+				useNativeWindows : Boolean = false
+		):void;
 
 
 		/**
@@ -90,7 +107,7 @@ package ro.ciacob.desktop.windows.prompts {
 		 * 			The title to be shown by this prompt.
 		 *
 		 * @param	image
-		 * 			A Class pointing to an ambedded image, to use as the prompt's icon. Optional,
+		 * 			A Class pointing to an embedded image, to use as the prompt's icon. Optional,
 		 * 			defaults to null (no icon).
 		 *
 		 * @param	buttons
@@ -99,24 +116,31 @@ package ro.ciacob.desktop.windows.prompts {
 		 * 			"OK" button. PAss an empty array to hide all buttons.
 		 *
 		 * @param	checkbox
-		 * 			A string containing the label for a checkbox (tipically, "don't show again"). Optional,
-		 * 			defaults to null, which shows no checkbox.
+		 * 			A string containing the label for a checkbox (typically, "don't show again").
+		 * 			Optional, defaults to null, which shows no checkbox.
 		 *
 		 * @param	progressBar
-		 * 			An IObserver implementor, that can dispatch a notification named "progressChanged", passing
-		 * 			two or three arguments to the listening callback: the current value, the target value and an
-		 * 			optional string to be used as a label. Optional, defaults to null, which shows no progress bar.
+		 * 			An IObserver implementor, that can dispatch a notification named
+		 * 			"progressChanged", passing two or three arguments to the listening callback:
+		 * 			the current value, the target value and an optional string to be used as a
+		 * 			label. Optional, defaults to null, which shows no progress bar.
 		 *
 		 * @param	centerToMainWindow
-		 * 			Optional flag to have created window automatically center in regard to the main window of the 
-		 * 			application.
+		 * 			Optional flag to have created window automatically center in regard to the main
+		 * 			window of the application.
 		 * 
-		 * return	Returns an IObserver implementor, similarily to built-in prompts, read documentation for
-		 * 			"alert()".
+		 * return	Returns an IObserver implementor, similarly to built-in prompts, read
+		 * 			documentation for "alert()".
 		 *
 		 * @see alert
 		 */
-		function prompt(content:String, title:String, image:Class = null, buttons:Vector.<String> = null, checkbox:String =
-			null, progressBar:IObserver = null, centerToMainWindow : Boolean = true):IObserver;
+		function prompt(
+				content:String,
+				title:String,
+				image:Class = null,
+				buttons:Vector.<String> = null,
+				checkbox:String = null,
+				progressBar:IObserver = null,
+				centerToMainWindow : Boolean = true):IObserver;
 	}
 }
