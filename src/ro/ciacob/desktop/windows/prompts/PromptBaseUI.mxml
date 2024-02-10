@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <windows:BasicWindowRootContainer
-		 styleName="secondaryWindow"
-		 xmlns:fx="http://ns.adobe.com/mxml/2009"
-		 xmlns:mx="library://ns.adobe.com/flex/mx"
-		 xmlns:windows="ro.ciacob.desktop.windows.*">
+        styleName="secondaryWindow"
+        xmlns:fx="http://ns.adobe.com/mxml/2009"
+        xmlns:mx="library://ns.adobe.com/flex/mx"
+        xmlns:windows="ro.ciacob.desktop.windows.*"
+        width="100%"
+        height="100%">
 
-	<mx:VBox x="{OUTER_PADDING}"
-			 y="{OUTER_PADDING}">
-	
-		<fx:Script>
+    <mx:VBox width="100%" height="100%"
+             paddingTop="{OUTER_PADDING}"
+             paddingBottom="{OUTER_PADDING}"
+             paddingLeft="{OUTER_PADDING}"
+             paddingRight="{OUTER_PADDING}">
+
+        <fx:Script>
 			<![CDATA[
             import mx.controls.Button;
             import mx.controls.CheckBox;
@@ -250,42 +255,45 @@
             }
             ]]>
 		</fx:Script>
-	
-		<!-- Image and text -->
-		<mx:HBox horizontalGap="{INNER_PADDING}"
-				 verticalAlign="middle">
-			<mx:Image height="100%"
-					  id="imageContent"
-					  verticalAlign="middle"/>
-			<mx:Text id="textContent"
-					 maxWidth="{MAX_TEXT_WIDTH}"
-					 paddingRight="{OUTER_PADDING}"
-					 selectable="false" />
-	
-		</mx:HBox>
-	
-		<!-- Progress bar -->
-		<mx:Box id="progressBarRecipient"
-				paddingLeft="{imageContent.width + INNER_PADDING}"
-				paddingRight="{OUTER_PADDING}"
-				width="100%"/>
-	
-		<!-- Check box -->
-		<mx:Box id="checkBoxRecipient"
-				paddingLeft="{imageContent.width + INNER_PADDING}"
-				paddingRight="{OUTER_PADDING}"/>
-	
-	
-		<!-- Buttons -->
-		<mx:HBox id="buttonsRecipient"
-				 paddingBottom="0"
-				 paddingLeft="{imageContent.width + INNER_PADDING}"
-				 paddingRight="{OUTER_PADDING}"
-				 paddingTop="{INNER_PADDING}"
-				 horizontalAlign="right"
-				 width="100%" />
 
-		<mx:Spacer width="100" height="15" />
-	
-	</mx:VBox>
+        <!-- Image and text -->
+        <mx:HBox horizontalGap="{INNER_PADDING}"
+                 verticalAlign="middle">
+            <mx:Image height="100%"
+                      id="imageContent"
+                      verticalAlign="middle"/>
+            <mx:Text id="textContent"
+                     maxWidth="{MAX_TEXT_WIDTH}"
+                     paddingRight="{OUTER_PADDING}"
+                     selectable="false"/>
+
+        </mx:HBox>
+
+        <!-- Progress bar -->
+        <mx:Box id="progressBarRecipient"
+                paddingLeft="{imageContent.width + INNER_PADDING}"
+                paddingRight="{OUTER_PADDING}"
+                width="100%"/>
+
+        <!-- Check box -->
+        <mx:Box id="checkBoxRecipient"
+                paddingLeft="{imageContent.width + INNER_PADDING}"
+                paddingRight="{OUTER_PADDING}"/>
+
+        <!-- Spacer, to push buttons to the bottom of the window, regardless of how much (or less) text there is. -->
+        <mx:Spacer width="100" height="100%" />
+
+        <!-- Buttons -->
+        <mx:HBox id="buttonsRecipient"
+                 paddingBottom="0"
+                 paddingLeft="{imageContent.width + INNER_PADDING}"
+                 paddingRight="{OUTER_PADDING}"
+                 paddingTop="{INNER_PADDING}"
+                 horizontalAlign="right"
+                 width="100%"/>
+
+        <!-- Spacer, to safeguard a strip of empty space to the bottom of the window. -->
+        <mx:Spacer width="100" height="5"/>
+
+    </mx:VBox>
 </windows:BasicWindowRootContainer>

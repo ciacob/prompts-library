@@ -34,30 +34,42 @@ public class PromptsManager implements IPromptsManager {
     private var _uiCallback:Function;
     private var _useNativeWindows:Boolean;
 
-    public function alert(content:String, title:String = null):IObserver {
-        return prompt(content, title || PromptDefaults.ALERT_TITLE, _alertIcon, Vector.<String>([_okLabel]));
-    }
-
     public function clear():void {
-        _clearExisting();
+        _closeAllPrompts();
     }
 
-    public function confirmation(content:String, title:String = null):IObserver {
-        return prompt(content, title || PromptDefaults.CONFIRMATION_TITLE, _confirmationIcon, Vector.<String>([_yesLabel,
-            _noLabel, _cancelLabel]));
+    public function alert(content:String, title:String = null, width:Number = 500, height:Number = 200):IObserver {
+        return prompt(content, title || PromptDefaults.ALERT_TITLE, _alertIcon,
+                Vector.<String>([_okLabel]),
+                null, null, true,
+                width, height);
     }
 
-    public function yesNoConfirmation(content:String, title:String = null):IObserver {
-        return prompt(content, title || PromptDefaults.CONFIRMATION_TITLE, _confirmationIcon, Vector.<String>([_yesLabel,
-            _noLabel]));
+    public function confirmation(content:String, title:String = null, width:Number = 500, height:Number = 200):IObserver {
+        return prompt(content, title || PromptDefaults.CONFIRMATION_TITLE, _confirmationIcon,
+                Vector.<String>([_yesLabel, _noLabel, _cancelLabel]),
+                null, null, true,
+                width, height);
     }
 
-    public function error(content:String, title:String = null):IObserver {
-        return prompt(content, title || PromptDefaults.ERROR_TITLE, _errorIcon, Vector.<String>([_okLabel]));
+    public function yesNoConfirmation(content:String, title:String = null, width:Number = 500, height:Number = 200):IObserver {
+        return prompt(content, title || PromptDefaults.CONFIRMATION_TITLE, _confirmationIcon,
+                Vector.<String>([_yesLabel, _noLabel]),
+                null, null, true,
+                width, height);
     }
 
-    public function information(content:String, title:String = null):IObserver {
-        return prompt(content, title || PromptDefaults.INFORMATION_TITLE, _informationIcon, Vector.<String>([_okLabel]));
+    public function error(content:String, title:String = null, width:Number = 500, height:Number = 200):IObserver {
+        return prompt(content, title || PromptDefaults.ERROR_TITLE, _errorIcon,
+                Vector.<String>([_okLabel]),
+                null, null, true, width, height);
+    }
+
+    public function information(content:String, title:String = null, width:Number = 500, height:Number = 200):IObserver {
+        return prompt(content, title || PromptDefaults.INFORMATION_TITLE, _informationIcon,
+                Vector.<String>([_okLabel]),
+                null, null, true,
+                width, height);
     }
 
     public function init(
@@ -102,7 +114,9 @@ public class PromptsManager implements IPromptsManager {
             buttons:Vector.<String> = null,
             checkboxLabel:String = null,
             progressBarObserver:IObserver = null,
-            centerToMainWindow:Boolean = true):IObserver {
+            centerToMainWindow:Boolean = true,
+            width:Number = 500,
+            height:Number = 200):IObserver {
 
         // MAKE THE CONTENT
         var component:PromptBaseUI = new PromptBaseUI;
@@ -143,7 +157,7 @@ public class PromptsManager implements IPromptsManager {
             component.createProgressBar(progressBarObserver);
         }
         // MAKE THE WINDOW
-        _clearExisting();
+        _closeAllPrompts();
 
         // Create the new window as the child of last blocking modal window, if any; otherwise,
         // the window will be created as a child of the main window.
@@ -156,26 +170,22 @@ public class PromptsManager implements IPromptsManager {
             component.uid = _uid;
             _windowsManager.observeWindowActivity(_uid, WindowActivity.DESTROY, _onWindowDestroyed);
             _windowsManager.updateWindowTitle(_uid, title);
-
-            // Give window a little time to resize to its content
-            Time.delay(0.05, function ():void {
-                _windowsManager.showWindow(_uid);
-                if (centerToMainWindow) {
-                    _windowsManager.observeWindowActivity(_uid, WindowActivity.BEFORE_DESTROY, _removeCenteringListener);
-                    _windowsManager.observeWindowActivity(_uid, WindowActivity.RESIZE, _centeringListener);
-                }
-            });
+            _windowsManager.updateWindowBounds(_uid, new Rectangle(0, 0, width, height));
+            _windowsManager.showWindow(_uid);
+            if (centerToMainWindow) {
+                _windowsManager.alignWindows(_uid, parentWindowId, 0.5, 0.5);
+            }
 
             // OBSERVE USER ACTIONS
             _currentPromptObserver = new Observer;
             component.addEventListener(PromptDefaults.USER_INTERRACTION, function (event:Event):void {
                 var targetComponent:PromptBaseUI = (event.target as PromptBaseUI);
                 _currentPromptDetail = targetComponent.interactionDetail;
-                // For any other button than the checkbox, destroy the window, and have some
-                // callback code executed AFTER - this is important.
+
+                // For any other button than the checkbox, destroy the window.
                 if (_currentPromptDetail != PromptDefaults.CHECKED &&
                         _currentPromptDetail != PromptDefaults.UNCHECKED) {
-                    _clearExisting();
+                    _closeAllPrompts();
                 } else {
                     // Otherwise, just send a notification that the checkbox was changed
                     _currentPromptObserver.notifyChange(PromptDefaults.USER_INTERRACTION, _currentPromptDetail);
@@ -184,22 +194,6 @@ public class PromptsManager implements IPromptsManager {
             return _currentPromptObserver;
         }
         return null;
-    }
-
-    /**
-     * Triggered when the window is resized in result to content being rendered.
-     */
-    private function _centeringListener(windowUid:String):void {
-        if (_windowsManager.isWindowAvailable(windowUid) &&
-                _windowsManager.isWindowVisible(windowUid)) {
-            var ownBounds:Rectangle = _windowsManager.retrieveWindowBounds(windowUid);
-            var rootBounds:Rectangle = _windowsManager.retrieveWindowBounds(_windowsManager.mainWindow);
-            var centeredBounds:Rectangle = new Rectangle(
-                    rootBounds.x + (rootBounds.width - ownBounds.width) * 0.5,
-                    rootBounds.y + (rootBounds.height - ownBounds.height) * 0.5
-            );
-            _windowsManager.updateWindowBounds(windowUid, centeredBounds, true);
-        }
     }
 
     /**
@@ -225,19 +219,14 @@ public class PromptsManager implements IPromptsManager {
         return parentId;
     }
 
-    private function _clearExisting():void {
+    private function _closeAllPrompts():void {
         if (_uid != null) {
             _windowsManager.stopObservingWindowActivity(_uid, WindowActivity.DESTROY, _onWindowDestroyed);
             _windowsManager.destroyWindow(_uid);
+
+            // Have some callback code executed AFTER the window was destroyed - this is important.
             _onWindowDestroyed();
         }
-    }
-
-    /**
-     * This method runs BEFORE an window is destroyed. This is the last chance for purging, releasing memory, etc.
-     */
-    private function _removeCenteringListener(ignore:String):void {
-        _windowsManager.stopObservingWindowActivity(_uid, WindowActivity.RESIZE, _centeringListener);
     }
 
     /**
