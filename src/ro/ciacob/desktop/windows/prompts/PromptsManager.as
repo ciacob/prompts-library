@@ -8,6 +8,7 @@ import ro.ciacob.desktop.windows.IWindowsManager;
 import ro.ciacob.desktop.windows.WindowActivity;
 import ro.ciacob.desktop.windows.WindowStyle;
 import ro.ciacob.desktop.windows.prompts.constants.PromptDefaults;
+import ro.ciacob.utils.OSFamily;
 import ro.ciacob.utils.Strings;
 import ro.ciacob.utils.Time;
 
@@ -117,6 +118,13 @@ public class PromptsManager implements IPromptsManager {
             centerToMainWindow:Boolean = true,
             width:Number = 500,
             height:Number = 200):IObserver {
+
+        // On Windows, resulting windows appear to be narrower than on macOS, for the exact same given width and height.
+        // Adding a gutter in order to circumvent that.
+        if (OSFamily.isWindows) {
+            width += 50;
+            height += 50;
+        }
 
         // MAKE THE CONTENT
         var component:PromptBaseUI = new PromptBaseUI;
